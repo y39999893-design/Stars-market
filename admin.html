@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin panel</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0a0c14;--s1:#111522;--s2:#171c2e;--line:#232940;--or:#ff6a00;--or2:#e85500;--tx:#eef0f6;--mu:#7c859c;--ok:#35c27a;--bad:#ff6b6b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:inherit;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:20px}
+main{padding:14px 16px}
+section[hidden],.hide{display:none}
+h3{font-size:17px;margin:2px 0 12px}
+button{font:inherit;color:inherit}
+.ghost{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-weight:600}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:16px}
+.st b{display:block;font-size:22px;margin-top:4px}
+.st small{color:var(--mu);font-size:12px}
+.st.big{grid-column:1/3;background:linear-gradient(135deg,#3a1d08,#8a3a0c)}
+.chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
+.chips button{white-space:nowrap;background:var(--s1);border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--mu)}
+.chips button.on{background:var(--or);border-color:var(--or);color:#fff}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.top b{overflow-wrap:anywhere}
+.mu{color:var(--mu);font-size:13px;overflow-wrap:anywhere}
+.tag{border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap;background:#3a2a0a;color:#ffc861}
+.tag.ok{background:#12301f;color:var(--ok)}
+.tag.no{background:#3a1616;color:var(--bad)}
+.acts{display:flex;gap:8px;margin-top:12px}
+.acts button{flex:1;border:0;border-radius:12px;padding:11px;font-weight:700;background:var(--s2)}
+.acts .y{background:#12301f;color:var(--ok)}
+.acts .n{background:#3a1616;color:var(--bad)}
+input,select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--tx);font:inherit;font-size:16px;padding:12px}
+input:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.pr{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-top:10px;align-items:center}
+.pr label{display:flex;gap:6px;align-items:center;color:var(--mu);font-size:13px}
+.pr input[type=checkbox]{width:auto}
+.go{background:linear-gradient(135deg,var(--or),var(--or2));border:0;color:#fff;font-weight:700;border-radius:12px;padding:12px 16px;width:100%;margin-top:10px}
+.add{display:grid;gap:8px}
+.empty{text-align:center;color:var(--mu);padding:24px 10px}
+nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,1fr);background:var(--s1);border:1px solid var(--line);border-radius:26px;padding:8px}
+nav button{background:none;border:0;color:var(--mu);font-size:12px;font-weight:600;display:grid;gap:3px;justify-items:center;padding:6px 0}
+nav button i{font-style:normal;font-size:20px}
+nav button.on{color:var(--or)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-90px);background:#1c2a1f;border:1px solid #2f5a3a;color:#bff0cb;padding:12px 18px;border-radius:14px;font-weight:600;transition:transform .25s;max-width:92%}
+.toast.err{background:#2a1515;border-color:#5a2f2f;color:#ffbcbc}
+.toast.show{transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="brand">⚙️ Admin panel</div><button class="ghost" id="ref">⟳ Yangilash</button></header>
+<main>
+  <section id="v-dash"><h3>Umumiy koʻrsatkichlar</h3><div class="stats" id="stats"></div></section>
+  <section id="v-orders" hidden><h3>Buyurtmalar</h3><div class="chips" id="chips"></div><div id="list"></div></section>
+  <section id="v-prices" hidden>
+    <h3>Narxlar</h3><div id="plist"></div>
+    <div class="card"><b>Yangi mahsulot</b>
+      <div class="add" style="margin-top:10px">
+        <select id="ncat"><option value="stars">Stars</option><option value="premium">Premium</option><option value="gifts">Giftlar</option><option value="nft">NFT</option></select>
+        <input id="nname" placeholder="Nomi (masalan, 500 Stars)">
+        <input id="nprice" type="number" inputmode="numeric" placeholder="Narxi (soʻm)">
+        <button class="go" id="nadd" style="margin-top:0">Qoʻshish</button>
+      </div>
+    </div>
+  </section>
+</main>
+<nav id="nav">
+  <button data-v="dash" class="on"><i>📊</i>Dashboard</button>
+  <button data-v="orders"><i>🧾</i>Buyurtmalar</button>
+  <button data-v="prices"><i>🏷</i>Narxlar</button>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const tg=window.Telegram&&window.Telegram.WebApp;
+try{tg&&(tg.ready(),tg.expand())}catch(e){}
+const API="https://stars-bot-ghii.onrender.com";
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ");
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let cur="dash",orders=[],prices=[],flt="all";
+
+function toast(m,err){const t=$("#toast");t.textContent=m;t.className="toast show"+(err?" err":"");setTimeout(()=>t.classList.remove("show"),2600)}
+async function api(p,b={}){
+  if(!tg||!tg.initData)throw new Error("Panelni Telegram ichida oching");
+  const r=await fetch(API+p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({initData:tg.initData,...b})});
+  if(r.status===401||r.status===403)throw new Error("Ruxsat yoʻq");
+  if(!r.ok)throw new Error("Xatolik: "+r.status);
+  return r.json();
+}
+const confirmQ=q=>new Promise(r=>tg&&tg.showConfirm?tg.showConfirm(q,r):r(confirm(q)));
+const tagc=s=>s==="Bajarildi"?"ok":s==="Rad etildi"?"no":"";
+
+async function loadDash(){
+  const s=await api("/api/admin/stats");
+  $("#stats").innerHTML=`<div class="st big"><small>Tushum (bajarilgan)</small><b>${fmt(s.sum)} soʻm</b></div>
+  <div class="st"><small>Buyurtmalar</small><b>${s.orders}</b></div>
+  <div class="st"><small>Bajarilgan</small><b>${s.done}</b></div>
+  <div class="st"><small>Kutilayotgan</small><b>${s.waiting}</b></div>
+  <div class="st"><small>Mijozlar</small><b>${s.customers}</b></div>`;
+}
+function drawOrders(){
+  const F=[["all","Hammasi"],["wait","Kutilmoqda"],["Bajarildi","Bajarildi"],["Rad etildi","Rad etildi"]];
+  $("#chips").innerHTML=F.map(([k,n])=>`<button data-f="${k}" class="${k===flt?"on":""}">${n}</button>`).join("");
+  const L=orders.filter(o=>flt==="all"||(flt==="wait"?["Kutilmoqda","Tekshirilmoqda"].includes(o.status):o.status===flt));
+  $("#list").innerHTML=L.length?L.map(o=>`<div class="card"><div class="top"><div><b>#${esc(o.id)} · ${esc(o.item)}</b><div class="mu">@${esc(o.to_user)} · ${fmt(o.price)} soʻm</div><div class="mu">${new Date(o.created_at).toLocaleString("uz-UZ")} · id ${esc(o.uid)}</div></div><span class="tag ${tagc(o.status)}">${esc(o.status)}</span></div>
+  <div class="acts">${o.status!=="Bajarildi"?`<button class="y" data-id="${esc(o.id)}" data-s="Bajarildi">✅ Bajarildi</button>`:""}${o.status!=="Rad etildi"?`<button class="n" data-id="${esc(o.id)}" data-s="Rad etildi">❌ Rad etish</button>`:""}</div></div>`).join(""):`<div class="empty">Buyurtma yoʻq</div>`;
+}
+async function loadOrders(){orders=await api("/api/admin/orders");drawOrders()}
+function seed(){
+  const S=[],a=(id,cat,name,price)=>S.push({id,cat,name,price,active:true});
+  [50,100,250,500,1000,2500].forEach(n=>a("s"+n,"stars",n+" Stars",n*220));
+  [[3,170000],[6,230000],[12,400000]].forEach(([m,p])=>a("p"+m,"premium",m+" oy",p));
+  [["💝",15],["🧸",15],["🎁",25],["🌹",25],["🎂",50],["💐",50],["🚀",50],["🏆",100]].forEach(([ic,s],i)=>a("g"+i,"gifts",ic+" "+s+" Stars",s*220));
+  [1,2,3,4].forEach(n=>a("n"+n,"nft","NFT gift #"+n,900000*n));
+  return S;
+}
+function drawPrices(){
+  $("#plist").innerHTML=prices.length?prices.map(p=>`<div class="card" data-id="${esc(p.id)}"><div class="top"><b>${esc(p.name)}</b><span class="mu">${esc(p.cat)}</span></div>
+  <div class="pr"><label><input type="checkbox" class="ac" ${p.active?"checked":""}> Faol</label><input type="number" inputmode="numeric" class="pi" value="${p.price}"></div>
+  <button class="go sv">Saqlash</button></div>`).join(""):`<div class="card empty">Narxlar hali kiritilmagan.<button class="go" id="seed">Namuna narxlarni yuklash</button></div>`;
+}
+async function loadPrices(){prices=await api("/api/admin/prices");drawPrices()}
+async function load(){
+  try{if(cur==="dash")await loadDash();if(cur==="orders")await loadOrders();if(cur==="prices")await loadPrices()}
+  catch(e){toast(e.message||"Xatolik",1)}
+}
+function show(v){
+  cur=v;["dash","orders","prices"].forEach(x=>$("#v-"+x).hidden=x!==v);
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  scrollTo(0,0);load();
+}
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(b)show(b.dataset.v)};
+$("#ref").onclick=load;
+$("#chips").onclick=e=>{const b=e.target.closest("button");if(b){flt=b.dataset.f;drawOrders()}};
+$("#list").onclick=async e=>{
+  const b=e.target.closest("button[data-s]");if(!b)return;
+  if(!await confirmQ("Holatni '"+b.dataset.s+"' ga oʻzgartirasizmi?"))return;
+  try{await api("/api/admin/status",{id:b.dataset.id,status:b.dataset.s});toast("Saqlandi");await loadOrders()}
+  catch(er){toast(er.message,1)}
+};
+$("#plist").onclick=async e=>{
+  try{
+    if(e.target.id==="seed"){prices=await api("/api/admin/prices",{items:seed()});drawPrices();toast("Yuklandi");return}
+    const b=e.target.closest(".sv");if(!b)return;
+    const c=b.closest(".card"),p=prices.find(x=>x.id===c.dataset.id);
+    const price=parseInt(c.querySelector(".pi").value,10);
+    if(!(price>0)){toast("Narx notoʻgʻri",1);return}
+    prices=await api("/api/admin/prices",{items:[{...p,price,active:c.querySelector(".ac").checked}]});
+    drawPrices();toast("Saqlandi");
+  }catch(er){toast(er.message,1)}
+};
+$("#nadd").onclick=async()=>{
+  const name=$("#nname").value.trim(),price=parseInt($("#nprice").value,10),cat=$("#ncat").value;
+  if(!name||!(price>0)){toast("Nom va narxni kiriting",1);return}
+  try{
+    prices=await api("/api/admin/prices",{items:[{id:cat[0]+Date.now().toString(36),cat,name,price,active:true}]});
+    $("#nname").value="";$("#nprice").value="";drawPrices();toast("Qoʻshildi");
+  }catch(er){toast(er.message,1)}
+};
+load();
+</script>
+</body>
+</html>
